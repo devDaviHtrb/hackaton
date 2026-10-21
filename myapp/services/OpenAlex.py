@@ -26,6 +26,8 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import Request, urlopen
 
+from sympy import Dict
+
 
 class AlexService:
     BASE_URL = "https://api.openalex.org/works"
@@ -45,8 +47,8 @@ class AlexService:
 
         self._lock = Lock()
         self._ultima_chamada = 0.0
-
-    def buscar(self, entrada, estimar_genero=False, country_id="BR"):
+    
+    def buscar(self, entrada, estimar_genero=False, country_id="BR") -> Dict[str, any]:
         """
         Recupera candidatos para referências bibliográficas.
 
@@ -59,7 +61,7 @@ class AlexService:
             country_id: viés de país para a estimativa de gênero (padrão "BR").
 
         Saída:
-            Candidatos com os dados originais do OpenAlex, as consultas
+            Candidatos(artigo) com os dados originais do OpenAlex, as consultas
             executadas e estatísticas. Quando estimar_genero=True, cada
             candidato ganha a chave "genero".
         """
