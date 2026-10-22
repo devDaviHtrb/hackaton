@@ -29,7 +29,7 @@ class ExistingReference(BaseModel):
     doi: str | None = None
     title: str
     authors: list[str]
-    year: int | None = None
+    year: int | None = Field(default=None, ge=1000, le=2100)
 
 
 # Define schema for gemini

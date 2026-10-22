@@ -73,6 +73,10 @@ Para cada referência identificada, extraia:
 Não invente dados ausentes nem complete informações bibliográficas
 com suposições.
 
+Para o campo year das referências, informe exclusivamente o ano de publicação com quatro dígitos,
+como 2023. Nunca informe datas completas, como 20230101. Se o ano não puder ser identificado com
+segurança, retorne null.
+
 Se nenhuma referência puder ser identificada, retorne uma lista vazia.
 
 5. Qualidade e precisão
