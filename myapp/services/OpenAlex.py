@@ -789,64 +789,81 @@ class AlexService:
         if inicio is not None and fim is not None and inicio > fim:
             raise ValueError("ano_inicial deve ser menor ou igual a ano_final.")
 
-# ------------------------------------------------------------
-# MOCK: simula o ArticleContextSchema retornado pelo Gemini
-dados_mock = {
-    "title": "Mapa do Brasil em Impressão 3D: Uma Nova Abordagem para o Ensino de Geografia",
+    
+    def _normalizar_candidato(self, artigo):
+        """Adapta um candidato OpenAlex ao formato dos serviços seguintes.
 
-    "research_objective": (
-        "Investigar como a impressão 3D pode contribuir para "
-        "o ensino de geografia e o engajamento dos alunos."
-    ),
+        Aceita tanto o formato atual (campos OpenAlex no nível principal)
+        quanto o formato anterior, que guardava a resposta em dados_openalex.
+        """
+        dados = artigo.get("dados_openalex") or artigo
 
-    "research_area": "Informática na Educação",
+        keywords = [
+            keyword["display_name"]
+            for keyword in (dados.get("keywords") or [])
+            if isinstance(keyword, dict) and keyword.get("display_name")
+        ]
 
-    "summary": (
-        "Este estudo analisa o uso de mapas tridimensionais "
-        "impressos em 3D como recurso pedagógico para alunos "
-        "do Ensino Fundamental. A pesquisa utiliza Design Science "
-        "Research e avalia o engajamento e a aprendizagem."
-    ),
+        primary_location = dados.get("primary_location") or {}
+        best_oa_location = dados.get("best_oa_location") or {}
+        doi = artigo.get("doi") or dados.get("doi")
+        openalex_id = artigo.get("openalex_id") or artigo.get("id") or dados.get("id")
 
-    "topics": [
-        {
-            "theme": "Impressão 3D na educação",
-            "description": (
-                "Uso de objetos impressos em 3D como "
-                "recursos didáticos na educação básica."
-            ),
-            "key_words": [
-                "3D printing education",
-                "educational technology",
-                "manufatura aditiva"
-            ],
-            "purpose": "related_works"
-        },
-        {
-            "theme": "Ensino de cartografia",
-            "description": (
-                "Uso de mapas e materiais concretos "
-                "no ensino de geografia."
-            ),
-            "key_words": [
-                "cartography education",
-                "geography teaching",
-                "tangible learning"
-            ],
-            "purpose": "theoretical_framework"
+        url = (
+            primary_location.get("landing_page_url")
+            or best_oa_location.get("landing_page_url")
+            or doi
+            or openalex_id
+        )
+
+        return {
+            "openalex_id": openalex_id,
+            "doi": doi,
+            "url": url,
+            "title": artigo.get("title") or artigo.get("titulo") or dados.get("title"),
+            "year": artigo.get("publication_year") or artigo.get("ano") or dados.get("publication_year"),
+            "abstract": artigo.get("abstract") or artigo.get("resumo") or "",
+            "cited_by_count": dados.get("cited_by_count"),
+            "keywords": keywords,
+            "authors": self.extrair_autores(artigo),
+            "topics_origin": artigo.get("topicos_origem", []),
+            "genero": artigo.get("genero"),
         }
-    ],
 
-    "existing_references": [
-        {
-            "doi": None,
-            "title": "Research Design: Qualitative, Quantitative, and Mixed Methods Approaches",
-            "authors": ["John W. Creswell"],
-            "year": 2014
-        }
-    ]
-}
+    def buscar_artigos_para_comparacao(
+        self,
+        entrada,
+        limite_percentual=50,
+        country_id="BR",
+        fallback_qtd=5,
+        limite_qtd=None,
+        preferencias=None,
+    ):
+        """Busca candidatos, filtra por estimativa de gênero e normaliza a saída."""
+        # 1. Busca os candidatos no OpenAlex. A estimativa será feita pelo filtro.
+        resultado = self.buscar(
+            entrada=entrada,
+            estimar_genero=False,
+            country_id=country_id,
+            preferencias=preferencias,
+        )
 
+        # 2. Aplica o filtro de autoria feminina.
+        resultado = self.filtrar_autoria_feminina(
+            resultado,
+            limite_percentual=limite_percentual,
+            country_id=country_id,
+            fallback_qtd=fallback_qtd,
+            limite_qtd=limite_qtd,
+        )
+
+        # 3. Normaliza os candidatos para os próximos serviços.
+        resultado["candidatos"] = [
+            self._normalizar_candidato(artigo)
+            for artigo in resultado["candidatos"]
+        ]
+
+        return resultado
 
 #========= EXEMPLO ==========
 
@@ -909,58 +926,60 @@ dados_mock = {
     ]
 }
 
-# 2. Instancia o serviço real do OpenAlex.
-service = AlexService()
+if __name__ == "__main__":
+    # 2. Instancia o serviço real do OpenAlex.
+    service = AlexService()
 
-# 3. Executa as buscas reais.
-resultado = service.buscar(
-    entrada=dados_mock,
-    estimar_genero=True,
-    country_id="BR",
-    preferencias={
-        "resultados_por_consulta": 5,
-        "busca_semantica": False,
-        "exigir_resumo": True,
-        "somente_acesso_aberto": False
-    }
-)
+    # 3. Executa as buscas reais.
+    resultado = service.buscar_artigos_para_comparacao(
+        entrada=dados_mock,
+        limite_percentual=50,
+        country_id="BR",
+        fallback_qtd=5,
+        preferencias={
+            "resultados_por_consulta": 5,
+            "busca_semantica": False,
+            "exigir_resumo": True,
+            "somente_acesso_aberto": False,
+        },
+    )
 
-# 4. Mostra estatísticas e consultas realizadas.
-print("\n========== ESTATÍSTICAS ==========")
-print(json.dumps(
-    resultado["estatisticas"],
-    indent=2,
-    ensure_ascii=False
-))
-
-print("\n========== CONSULTAS ==========")
-print(json.dumps(
-    resultado["consultas"],
-    indent=2,
-    ensure_ascii=False
-))
-
-# 5. Mostra TODOS os campos devolvidos por candidato.
-print("\n========== ARTIGOS ==========")
-
-for i, artigo in enumerate(resultado["candidatos"], 1):
-    print(f"\n========== ARTIGO {i} ==========")
+    # 4. Mostra estatísticas e consultas realizadas.
+    print("\n========== ESTATÍSTICAS ==========")
     print(json.dumps(
-        artigo,
+        resultado["estatisticas"],
         indent=2,
-        ensure_ascii=False,
-        default=str
+        ensure_ascii=False
     ))
 
-# 6. Mostra um resumo dos principais campos.
-print("\n========== RESUMO ==========")
+    print("\n========== CONSULTAS ==========")
+    print(json.dumps(
+        resultado["consultas"],
+        indent=2,
+        ensure_ascii=False
+    ))
 
-for artigo in resultado["candidatos"]:
-    print("\nTítulo:", artigo.get("title"))
-    print("DOI:", artigo.get("doi"))
-    print("Ano:", artigo.get("publication_year"))
-    print("Abstract:", artigo.get("abstract"))
-    print("Citações:", artigo.get("cited_by_count"))
-    print("Autores:", AlexService.extrair_autores(artigo))
-    print("Gênero:", artigo.get("genero"))
-    print("-" * 60)
+    # 5. Mostra TODOS os campos devolvidos por candidato.
+    print("\n========== ARTIGOS ==========")
+
+    for i, artigo in enumerate(resultado["candidatos"], 1):
+        print(f"\n========== ARTIGO {i} ==========")
+        print(json.dumps(
+            artigo,
+            indent=2,
+            ensure_ascii=False,
+            default=str
+        ))
+
+    # 6. Mostra um resumo dos principais campos.
+    print("\n========== RESUMO ==========")
+
+    for artigo in resultado["candidatos"]:
+        print("\nTítulo:", artigo.get("title"))
+        print("DOI:", artigo.get("doi"))
+        print("Ano:", artigo.get("year"))
+        print("Abstract:", artigo.get("abstract"))
+        print("Citações:",  artigo.get("cited_by_count"))
+        print("Autores:", artigo.get("authors"))
+        print("Gênero:", artigo.get("genero"))
+        print("-" * 60)
