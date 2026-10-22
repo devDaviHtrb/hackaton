@@ -1,3 +1,16 @@
+# GeminiSchema.py
+#
+# Schemas Pydantic usados como response_schema nas chamadas ao Gemini
+# (structured output). Cada classe define o formato JSON que o modelo é
+# obrigado a devolver; as descrições dos Field orientam o modelo.
+#
+# IMPORTANTE: os nomes de campo aqui devem bater com os nomes citados nos
+# prompts (GeminiPrompt.py). Um descompasso (ex.: prompt pedindo "score"
+# enquanto o schema exige "importance_score") faz o valor vir zerado/errado.
+#
+# Restrição do Gemini: structured output NÃO aceita additionalProperties,
+# então evite campos dict[str, ...] de chaves livres nestes schemas.
+
 from google import genai
 from google.genai import types
 from pydantic import BaseModel, Field
@@ -6,7 +19,8 @@ from enum import Enum
 
 #============================== Schema for Gemini =============================#
 
-# Purpose enum for Topic schema
+# Finalidade bibliográfica de um tópico. Enum fechado para o Gemini escolher
+# exatamente uma das categorias (o OpenAlex também valida contra estes valores).
 class TopicPurpose(str, Enum):
     METHOD = "method"
     RELATED_WORKS = "related_works"
@@ -14,7 +28,8 @@ class TopicPurpose(str, Enum):
     CONTEXT = "context"
 
 
-# Topic schema
+# Um tópico = uma necessidade bibliográfica distinta do artigo. As key_words
+# viram consultas de busca no OpenAlex.
 class TopicSchema(BaseModel):
     theme: str = Field(description="O tema especifico que necessita outras referências específicas")
     description: str = Field("breve descrição do tema presente no artigo")
@@ -24,16 +39,18 @@ class TopicSchema(BaseModel):
                             )
     purpose: TopicPurpose = Field(description="Finalidade bibliográfica do tópico.")
 
-# Existing References
+# Referência já citada no artigo do usuário. Serve para o OpenAlex EXCLUIR
+# da busca o que o autor já referenciou (evita recomendar o que já existe).
 class ExistingReference(BaseModel):
     doi: str | None = None
     title: str
     authors: list[str]
+    # Ano limitado a 4 dígitos plausíveis; None quando não identificável.
     year: int | None = Field(default=None, ge=1000, le=2100)
 
 
-# Define schema for gemini
-# Each attribute in class represent a "key" in Gemini JSON response
+# Schema principal da análise do artigo do usuário (1ª chamada ao Gemini).
+# Cada atributo é uma "chave" do JSON de resposta. É a entrada do OpenAlex.
 class ArticleContextSchema(BaseModel):
     title: str  = Field(description="O título, tema, principal do artigo do usuário")
     research_objective: str = Field(description="O objetivo principal da pesquisa/artigo")
@@ -55,6 +72,7 @@ class ArticleContextSchema(BaseModel):
 from pydantic import BaseModel, Field
 
 
+# Uma evidência textual extraída do resumo do candidato que sustenta a nota.
 class EvidenceSchema(BaseModel):
     quote: str = Field(
         description="Trecho literal do resumo do artigo candidato que sustenta a avaliação."
@@ -65,6 +83,9 @@ class EvidenceSchema(BaseModel):
     )
 
 
+# Um local sugerido no texto original onde a citação caberia ("onde citar").
+# page/line/word/paragraph_id são opcionais: hoje o pipeline não envia os
+# metadados de localização, então normalmente vêm null.
 class CitationLocationSchema(BaseModel):
     page: int | None = Field(
         default=None,
@@ -104,7 +125,13 @@ class CitationLocationSchema(BaseModel):
     )
 
 
+# Schema da 2ª chamada ao Gemini (por candidato): nota de importância +
+# justificativa + evidências + sugestões de onde citar.
+# NÃO tem campo de chaves livres (dict) de propósito: structured output do
+# Gemini rejeita additionalProperties.
 class ImportanceAnalysisSchema(BaseModel):
+    # Campo lido por Article.calculate_score; o prompt precisa citá-lo com
+    # este mesmo nome (importance_score) para não vir zerado.
     importance_score: float = Field(
         description="Pontuação final de importância do artigo, de 0 a 100.",
         ge=0,

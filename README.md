@@ -1,4 +1,4 @@
-# Hackathon Core Starter Kit 🚀
+# Hackathon Core Starter Kit - arquitetura lanciare (https://github.com/devDaviHtrb/AuctionProject) 🚀
 
 Starter kit modular e acelerado em **Python (Flask)** desenvolvido para criar aplicações completas rapidamente durante hackathons.
 
@@ -37,6 +37,7 @@ Starter kit modular e acelerado em **Python (Flask)** desenvolvido para criar ap
 ## 🚀 Como Rodar o Projeto
 
 1. **Ative o ambiente virtual**:
+
    ```powershell
    .venv\Scripts\activate
    ```
@@ -52,7 +53,6 @@ Starter kit modular e acelerado em **Python (Flask)** desenvolvido para criar ap
 
 ---
 
-
 ## 🛠️ Como Adicionar Funcionalidades
 
 - **Nova Rota**: Crie um arquivo em `myapp/routes/{actions|pages}/{public|common|admin}/NomeDaRota.py` com um `Blueprint`. Ela será registrada automaticamente!
@@ -64,6 +64,7 @@ Consulte o arquivo `.agents/skills/hackathon-system-guide/SKILL.md` ou `GEMINI.m
 ---
 
 # Hackathon 2026 — CitaDelas: Análise e Recomendação de Referências Científicas de Autoria Feminina
+
 <img width="825" height="291" alt="citadelas logo recortada" src="https://github.com/user-attachments/assets/5ddf6155-3bf1-4349-af35-128b52c9bcb7" />
 
 ## 1. Sobre o projeto
@@ -119,20 +120,20 @@ O sistema utiliza o Gemini para compreender o contexto do manuscrito, a OpenAlex
 
 ### Responsabilidades dos diretórios
 
-| Diretório | Responsabilidade |
-|---|---|
-| `models/` | Organização dos modelos de dados da aplicação. |
-| `repositories/` | Organização das operações de acesso e persistência de dados. |
-| `routes/actions/` | Rotas relacionadas a ações da aplicação, organizadas por contexto de acesso. |
-| `routes/pages/` | Rotas relacionadas às páginas da aplicação, organizadas por contexto de acesso. |
-| `services/` | Implementação da lógica de negócio e das integrações principais. |
-| `setup/` | Configuração e inicialização de componentes da aplicação. |
-| `sockets/` | Componentes relacionados à comunicação por sockets. |
-| `static/js/` | Código JavaScript do frontend, incluindo chamadas à API, componentes, interatividade e validações. |
-| `static/styles/` | Estilos visuais da aplicação. |
-| `templates/` | Templates utilizados na renderização das páginas. |
-| `utils/` | Recursos auxiliares e utilitários compartilhados. |
-| `.agents/skills/` | Instruções e recursos de apoio ao desenvolvimento com agentes. |
+| Diretório         | Responsabilidade                                                                                   |
+| ----------------- | -------------------------------------------------------------------------------------------------- |
+| `models/`         | Organização dos modelos de dados da aplicação.                                                     |
+| `repositories/`   | Organização das operações de acesso e persistência de dados.                                       |
+| `routes/actions/` | Rotas relacionadas a ações da aplicação, organizadas por contexto de acesso.                       |
+| `routes/pages/`   | Rotas relacionadas às páginas da aplicação, organizadas por contexto de acesso.                    |
+| `services/`       | Implementação da lógica de negócio e das integrações principais.                                   |
+| `setup/`          | Configuração e inicialização de componentes da aplicação.                                          |
+| `sockets/`        | Componentes relacionados à comunicação por sockets.                                                |
+| `static/js/`      | Código JavaScript do frontend, incluindo chamadas à API, componentes, interatividade e validações. |
+| `static/styles/`  | Estilos visuais da aplicação.                                                                      |
+| `templates/`      | Templates utilizados na renderização das páginas.                                                  |
+| `utils/`          | Recursos auxiliares e utilitários compartilhados.                                                  |
+| `.agents/skills/` | Instruções e recursos de apoio ao desenvolvimento com agentes.                                     |
 
 ## 3. Fluxo de execução da pipeline
 
@@ -232,13 +233,13 @@ A função `calculate_score` reúne os componentes e calcula uma pontuação ger
 
 Os pesos configurados são:
 
-| Critério | Peso |
-|---|---:|
-| Similaridade | 40% |
-| Importância | 25% |
-| Relevância | 15% |
-| Atualidade | 10% |
-| Composição de gênero | 10% |
+| Critério             | Peso |
+| -------------------- | ---: |
+| Similaridade         |  40% |
+| Importância          |  25% |
+| Relevância           |  15% |
+| Atualidade           |  10% |
+| Composição de gênero |  10% |
 
 A pontuação geral é calculada pela soma da pontuação de cada critério multiplicada pelo respectivo peso.
 
@@ -399,18 +400,18 @@ Compara título, resumo e palavras-chave dos artigos.
 
 Os pesos por campo são:
 
-| Campo | Peso |
-|---|---:|
-| Título | 20% |
-| Resumo | 45% |
-| Palavras-chave | 35% |
+| Campo          | Peso |
+| -------------- | ---: |
+| Título         |  20% |
+| Resumo         |  45% |
+| Palavras-chave |  35% |
 
 Cada campo combina similaridade semântica e lexical:
 
-| Método | Peso |
-|---|---:|
-| Semântico | 80% |
-| Lexical | 20% |
+| Método    | Peso |
+| --------- | ---: |
+| Semântico |  80% |
+| Lexical   |  20% |
 
 A abordagem semântica utiliza o modelo `paraphrase-multilingual-MiniLM-L12-v2`. A abordagem lexical utiliza TF-IDF, unigramas, bigramas e similaridade do cosseno.
 
@@ -471,19 +472,14 @@ A integração depende de `Config.DEMOGRAFIX_API_KEY`.
 
 ## 6. Tecnologias e integrações
 
-| Tecnologia | Utilização |
-|---|---|
-| Python | Linguagem principal do backend. |
-| Flask | Framework web e implementação do endpoint. |
-| Pydantic | Validação dos dados estruturados. Montagem dos Schemas de resposta estruturada |
-| Google Gemini | Análise contextual e avaliação de importância. |
-| OpenAlex | Busca bibliográfica e metadados acadêmicos. |
-| Demografix | Estimativa de gênero associada aos nomes dos autores. |
-| Sentence Transformers | Embeddings para comparação semântica. |
-| scikit-learn | TF-IDF e similaridade do cosseno. |
-| pypdf | Extração de texto de PDFs. |
-
-
-
-
-
+| Tecnologia            | Utilização                                                                     |
+| --------------------- | ------------------------------------------------------------------------------ |
+| Python                | Linguagem principal do backend.                                                |
+| Flask                 | Framework web e implementação do endpoint.                                     |
+| Pydantic              | Validação dos dados estruturados. Montagem dos Schemas de resposta estruturada |
+| Google Gemini         | Análise contextual e avaliação de importância.                                 |
+| OpenAlex              | Busca bibliográfica e metadados acadêmicos.                                    |
+| Demografix            | Estimativa de gênero associada aos nomes dos autores.                          |
+| Sentence Transformers | Embeddings para comparação semântica.                                          |
+| scikit-learn          | TF-IDF e similaridade do cosseno.                                              |
+| pypdf                 | Extração de texto de PDFs.                                                     |
